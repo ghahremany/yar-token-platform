@@ -1,0 +1,14 @@
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block direct web access to private directories and sensitive files
+    RewriteRule ^(app|cli|crons|database|docs|storage|tests|vendor|contracts|android-wallet|\.git)(/|$) - [F,L]
+    RewriteRule ^(\.env.*|composer\.(json|lock)|config\.php|README\.md|SECURITY\.md|CONTRIBUTING\.md|LICENSE)$ - [F,L]
+
+    # Route requests into public/ when deployed directly inside public_html
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>

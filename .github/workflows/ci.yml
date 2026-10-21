@@ -1,0 +1,53 @@
+name: YarToken Full-Stack & Android ECDSA CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integration-and-crypto:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: yar_token_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3 (with GMP, BCMath, Sodium, PDO MySQL, GD)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, curl, pdo_mysql, bcmath, gmp, sodium, gd
+
+      - name: Setup Java 17 (for Android BIP-44 + RFC 6979 ECDSA Signer Verification)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compile Solidity ERC-20 Mirror Contract Syntax Check
+        run: test -s contracts/CommunityToken.sol
+
+      - name: Run 36 Full-Stack PHP 8 + MySQL 8 + Java Android ECDSA Integration Checks
+        env:
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_PORT: 3306
+          TEST_DB_NAME: yar_token_test
+          TEST_DB_USER: root
+          TEST_DB_PASS: root
+        run: php tests/run_all.php
